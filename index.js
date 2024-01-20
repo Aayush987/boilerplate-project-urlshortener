@@ -56,11 +56,17 @@ app.get('/api/hello', function(req, res) {
 
 app.post('/api/shorturl',async (req,res) => {
   const { url } = req.body;
+  try {
       const short_url = Math.floor(Math.random() * 1000);
       const data = {original_url: url, short_url: short_url}
       const newUrl = new Urls(data);
       const UrL = await newUrl.save();
       res.json(data);
+    
+  } catch (error) {
+       res.status(404).json({error: 'Invalid URL'});
+  }
+      
   }) 
 
 app.get('/api/shorturl/:short_url',async (req,res) => {
