@@ -57,16 +57,20 @@ app.get('/api/hello', function(req, res) {
 
 app.post('/api/shorturl',async (req,res) => {
   const { url } = req.body;  
-  try {
-      const urlObj = new URL(url);
+  let urlRegex = new RegExp(/((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)/gi);
+  
+  if(!url.match(urlRegex)) {
+   res.json({error: 'Invalid URL'});
+    
+  }
+  else{
+      // const urlObj = new URL(url);
       const short_url = Math.floor(Math.random() * 1000);
       const data = {original_url: url, short_url: short_url}
       const newUrl = new Urls(data);
       const UrL = await newUrl.save();
       res.json(data);
     
-  } catch (error) {
-       res.status(404).json({error: 'Invalid URL'});
   }      
   }) 
 
