@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const Urls = require('./models/url');
 const dns = require('dns');
+const util = require('util');
 
 // Basic Configuration
 const port = 3000;
@@ -30,21 +31,48 @@ app.get('/api/hello', function(req, res) {
   res.json({ greeting: 'hello API' });
 });
 
-app.post('/api/shorturl',(req,res) => {
+app.post('/api/shorturl', async (req, res) => {
   const { url } = req.body;
-  dns.lookup(url, (error,address,family) => {
-    if(error) {
-      res.status(404).json({error: 'invalid url'})
-      console.log(error);
-    }else {
-      const short_url = Math.floor(Math.random() * 1000);
-      const data = {original_url: url, short_url: short_url}
-      const newUrl = new Urls(data);
-      const UrL = newUrl.save();
-      res.json(data);
-    }
-  }) 
-})
+
+  try {
+    // Use util.promisify to convert the callback-based function to a promise
+    const dnsLookup = util.promisify(dns.lookup);
+
+    // Perform DNS lookup asynchronously
+    const { address } = await dnsLookup(url);
+
+    // If the DNS lookup is successful, proceed with saving to the database
+    const short_url = Math.floor(Math.random() * 1000);
+    const data = { original_url: url, short_url: short_url };
+    const newUrl = new Urls(data);
+
+    // Save to the database
+    await newUrl.save();
+
+    // Send the response
+    res.json(data);
+  } catch (error) {
+    // Handle errors, send appropriate response
+    res.status(404).json({ error: 'Invalid URL' });
+    console.log(error);
+  }
+});
+
+// app.post('/api/shorturl',async (req,res) => {
+//   const { url } = req.body;
+//  const dnsLookup = dns.lookup(url, (error,address,family) => {
+//     if(error) {
+//       res.status(404).json({error: 'invalid url'})
+//       console.log(error);
+//     }else {
+//       const short_url = Math.floor(Math.random() * 1000);
+//       const data = {original_url: url, short_url: short_url}
+//       const newUrl = await new Urls(data);
+//       const UrL = await newUrl.save();
+//       res.json(data);
+//     }
+//   }) 
+// })
 
 app.get('/api/shorturl/:short_url',async (req,res) => {
      const short_url = req.params.short_url;
