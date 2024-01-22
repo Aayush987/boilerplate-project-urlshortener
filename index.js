@@ -7,6 +7,8 @@ const mongoose = require('mongoose');
 const Urls = require('./models/url');
 const dns = require('dns');
 const util = require('util');
+const cron = require('node-cron');
+const axios = require('axios');
 
 
 // Basic Configuration
@@ -19,6 +21,17 @@ mongoose.connect(process.env.MONGO_URI);
 const db = mongoose.connection;
 db.on('error',(error) => console.error(error));
 db.once('open',() => console.log('Connected to Database'));
+
+
+cron.schedule('*/10 * * * *', () => {
+     axios.get('https://url-shortener-x793.onrender.com/')
+        .then(resonse => {
+          console.log('Server Pinged successfully');
+        })
+        .catch(error => {
+          console.log(error);
+        });
+})
 
 
 app.use('/public', express.static(`${process.cwd()}/public`));
